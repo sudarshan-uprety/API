@@ -1,10 +1,8 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler 
 import json 
 from mongoengine import *
-from passlib.hash import pbkdf2_sha1
 
 from modles import db_disconnect,db_connection,User
-from response import *
 import modles
 
 
