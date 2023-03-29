@@ -1,5 +1,6 @@
 from mongoengine import *
 from passlib.hash import pbkdf2_sha1
+import datetime
 
 def db_connection():
     connect(host="mongodb://localhost:27017/mydatabase")
@@ -14,6 +15,7 @@ class User(Document):
     phone=IntField(required=True,unique=True)
     password = StringField(required=True,password=True)
     confirm_password = StringField(password=True)
+    created_at=DateTimeField(default=datetime.datetime.now)
     
     def set_password(self,password):
         self.password=pbkdf2_sha1.hash(password)
@@ -32,7 +34,11 @@ class Post(Document):
     user_id = StringField(required=True)
     title=StringField(max_length=100, required=True)
     body=StringField(max_length=1000,required=True)
+    created_at=DateTimeField(default=datetime.datetime.now)
 
+
+    def all(self):
+        return Post.objects(user_id=self.user_id)
     meta = {
         'collection': 'Post',
         'strict': False
