@@ -34,12 +34,21 @@ class PostClass(UserClass):
                         user=User.objects(id=user_id).first()
                         if user:
                             posts=Post(user_id=user_id).all()
-                            print(posts)
+                            post_list=[]
+                            for post in posts:
+                                post_dict={
+                                'id':str(post.id),
+                                'user_id':post.user_id,
+                                'title':post.title,
+                                'body':post.body,
+                                'created_at' :str(post.created_at),
+                                }
+                                post_list.append(post_dict)
                             self.send_response(200)
                             self.send_header('Content-Type', 'application/json')
                             self.end_headers()
-                            response={posts}
-                            self.wfile.write(json.dumps(response).encode())
+                            response=json.dumps(post_list)
+                            self.wfile.write(response.encode())
                         else:
                             raise Exception("no post created at.")
             except Exception as e:
