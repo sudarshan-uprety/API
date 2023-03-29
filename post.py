@@ -1,15 +1,17 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler 
 import json 
 from mongoengine import *
+from authenticate import verify_token,is_authenticated
+import jwt
 
-from modles import db_disconnect,db_connection,User
+from modles import db_disconnect,db_connection,User,Post
 import modles
 
 
-class UserFunctions(BaseHTTPRequestHandler):
+class UserClass(BaseHTTPRequestHandler):
 
     def do_POST(self):
-        if self.path=='/create' and self.command=='POST':
+        if self.path=='/createAccount' and self.command=='POST':
             content_length=int(self.headers['Content-Length'])
             body = self.rfile.read(content_length).decode()
             data=json.loads(body)
@@ -48,7 +50,7 @@ class UserFunctions(BaseHTTPRequestHandler):
                 response = {"error": str(e)}
                 self.wfile.write(json.dumps(response).encode())
                 
-        if self.path=='/login' and self.command=='POST':
+        elif self.path=='/login' and self.command=='POST':
             content_length=int(self.headers['Content-Length'])
             body = self.rfile.read(content_length).decode()
             data=json.loads(body)
@@ -60,11 +62,15 @@ class UserFunctions(BaseHTTPRequestHandler):
                 user = User.objects(email=data["email"]).first()
                 if user:
                     
-                    if modles.User.check_password(user,data["password"]):
+                    if User.check_password(user,data["password"]):
+                        # Generate a JWT containing the user ID and a secret key
+                        payload = {'user_id': str(user.id)}
+                        secret_key = 'mysecret'
+                        token = jwt.encode(payload, secret_key, algorithm='HS256')
                         self.send_response(200)
                         self.send_header('Content-Type', 'application/json')
                         self.end_headers()
-                        response = {"message": "User authenticated successfully"}
+                        response = {"message": "User authenticated successfully", "token":token}
                         self.wfile.write(json.dumps(response).encode())
                     else:
                         raise Exception("Invalid email or password")
@@ -77,8 +83,47 @@ class UserFunctions(BaseHTTPRequestHandler):
                 error_message=str(e)
                 self.wfile.write(json.dumps({"error": error_message}).encode())
 
+        elif self.path=='/createPost' and self.command=='POST':
+            content_length=int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length).decode()
+            data=json.loads(body)
+            try:
+                if not is_authenticated(self):
+                    self.send_response(401)
+                    self.send_header('Content-Type','application/json')
+                    self.end_headers()
+                    response={"error":"User is not loggedin."}
+                    self.wfile.write(json.dumps(response).encode())
 
-
-    
-httpd = HTTPServer(('localhost', 4000), UserFunctions) 
-httpd.serve_forever()
+                else:
+                    token = self.headers.get("Authorization")
+                    if not verify_token(token):
+                        self.send_response(401)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        response = {"error": "Invalid token"}
+                        self.wfile.write(json.dumps(response).encode())
+                    else:
+                        decoded_token=jwt.decode(token,'mysecret',algorithms=['HS256'])
+                        user_id=decoded_token['user_id']
+                        print(user_id)
+                        db_disconnect()
+                        db_connection()
+                        user=User.objects(id=user_id).first()
+                        if user:
+                            post = Post(user_id=str(user.id), title=data["title"], body=data["body"])
+                            post.save()
+                            self.send_response(201)
+                            self.send_header('Content-Type', 'application/json')
+                            self.end_headers()
+                            response = {"message": "Post created successfully"}
+                            self.wfile.write(json.dumps(response).encode())
+                        else:
+                             raise Exception("No user data is available") 
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type','application/json')
+                self.end_headers()
+                error_message=str(e)
+                print(error_message)
+                self.wfile.write(json.dumps({"error": error_message}).encode())

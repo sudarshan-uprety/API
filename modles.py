@@ -15,11 +15,6 @@ class User(Document):
     password = StringField(required=True,password=True)
     confirm_password = StringField(password=True)
     
-
-    # def validate(self,clean=True):
-    #     if self.password != self.confirm_password:
-    #         raise ValidationError("Password and confirm password fields do not match.")
-    
     def set_password(self,password):
         self.password=pbkdf2_sha1.hash(password)
 
@@ -31,4 +26,15 @@ class User(Document):
         'strict': False
 
     }
-disconnect()
+
+
+class Post(Document):
+    user_id = StringField(required=True)
+    title=StringField(max_length=100, required=True)
+    body=StringField(max_length=1000,required=True)
+
+    meta = {
+        'collection': 'Post',
+        'strict': False
+    }
+
