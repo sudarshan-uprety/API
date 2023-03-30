@@ -6,9 +6,6 @@ class PostClass(UserClass):
 
     def do_GET(self):
         if self.path=='/getPost' and self.command=='GET':
-            content_length=int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length).decode()
-            data=json.loads(body)
 
             try:
                 if not is_authenticated(self):
@@ -56,5 +53,4 @@ class PostClass(UserClass):
                 self.send_header('Content-Type','application/json')
                 self.end_headers()
                 error_message=str(e)
-                print(error_message)
                 self.wfile.write(json.dumps({"error": error_message}).encode())

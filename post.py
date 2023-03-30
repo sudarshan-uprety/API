@@ -34,7 +34,6 @@ class UserClass(BaseHTTPRequestHandler):
 
 
             except NotUniqueError as e:
-                print(e)
                 self.send_response(409)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -43,7 +42,6 @@ class UserClass(BaseHTTPRequestHandler):
 
 
             except Exception as e:
-                print(e)
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -106,7 +104,6 @@ class UserClass(BaseHTTPRequestHandler):
                     else:
                         decoded_token=jwt.decode(token,'mysecret',algorithms=['HS256'])
                         user_id=decoded_token['user_id']
-                        print(user_id)
                         db_disconnect()
                         db_connection()
                         user=User.objects(id=user_id).first()
@@ -125,5 +122,4 @@ class UserClass(BaseHTTPRequestHandler):
                 self.send_header('Content-Type','application/json')
                 self.end_headers()
                 error_message=str(e)
-                print(error_message)
                 self.wfile.write(json.dumps({"error": error_message}).encode())
