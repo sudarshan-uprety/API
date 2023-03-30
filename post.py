@@ -4,7 +4,7 @@ from mongoengine import *
 from authenticate import verify_token,is_authenticated
 import jwt
 
-from modles import db_disconnect,db_connection,User,Post
+from modles import db_disconnect,db_connection,User,Post,Vote
 import modles
 
 
@@ -114,6 +114,55 @@ class UserClass(BaseHTTPRequestHandler):
                             self.send_header('Content-Type', 'application/json')
                             self.end_headers()
                             response = {"message": "Post created successfully"}
+                            self.wfile.write(json.dumps(response).encode())
+                        else:
+                             raise Exception("No user data is available") 
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type','application/json')
+                self.end_headers()
+                error_message=str(e)
+                self.wfile.write(json.dumps({"error": error_message}).encode())
+
+        
+        elif self.path=='/votePost' and self.command=='POST':
+            content_length=int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length).decode()
+            vote_data=json.loads(body)
+            
+            try:
+                if not is_authenticated(self):
+                    self.send_response(401)
+                    self.send_header('Content-Type','application/json')
+                    self.end_headers()
+                    response={"error":"User is not loggedin."}
+                    self.wfile.write(json.dumps(response).encode())
+
+                else:
+                    token = self.headers.get("Authorization")
+                    if not verify_token(token):
+                        self.send_response(401)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        response = {"error": "Invalid token"}
+                        self.wfile.write(json.dumps(response).encode())
+                    else:
+                        decoded_token=jwt.decode(token,'mysecret',algorithms=['HS256'])
+                        user_id=decoded_token['user_id']
+                        db_disconnect()
+                        db_connection()
+                        user=User.objects(id=user_id).first()
+
+                        if user:
+                            votes = Vote.objects(post_id=vote_data["post_id"], user_id=str(user.id))
+                            if votes:  
+                                raise Exception("User already voted on this post.")
+                            vote1=Vote(user_id=str(user.id),post_id=vote_data["post_id"],vote=vote_data["vote"])
+                            vote1.save()
+                            self.send_response(201)
+                            self.send_header('Content-Type', 'application/json')
+                            self.end_headers()
+                            response = {"message": "Voted"}
                             self.wfile.write(json.dumps(response).encode())
                         else:
                              raise Exception("No user data is available") 

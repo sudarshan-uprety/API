@@ -44,3 +44,15 @@ class Post(Document):
         'strict': False
     }
 
+
+class Vote(Document):
+    post_id=StringField(required=True)
+    user_id=StringField(required=True)
+    vote=IntField(required=True,default=0,min_value=0,max_value=5)
+    voted_date=DateTimeField(default=datetime.datetime.now)
+
+
+    meta = {
+        'collection': 'Vote',
+        'strict': False
+    }
