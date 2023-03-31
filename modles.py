@@ -56,3 +56,24 @@ class Vote(Document):
         'collection': 'Vote',
         'strict': False
     }
+
+class Admin(Document):
+    first_name=StringField(required=True)
+    last_name=StringField(required=True)
+    email=EmailField(required=True,unique=True)
+    phone=IntField(required=True,unique=True)
+    password=StringField(password=True,required=True)
+    confirm_password = StringField(password=True)
+    created_date=DateTimeField(default=datetime.datetime.now)
+
+    def set_password(self,password):
+        self.password=pbkdf2_sha1.hash(password)
+
+    def check_password(self,password):
+        return pbkdf2_sha1.verify(password,self.password)
+
+
+    meta = {
+        'collection': 'Admin',
+        'strict': False
+    }
