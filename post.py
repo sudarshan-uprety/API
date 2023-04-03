@@ -235,3 +235,46 @@ class UserClass(BaseHTTPRequestHandler):
                 self.end_headers()
                 response = {"error": str(e)}
                 self.wfile.write(json.dumps(response).encode())
+
+
+
+        elif self.path == '/adminLogin' and self.command == 'POST':
+            content_length = int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            try:
+                if data["email"] == "" or data["password"] == "":
+                    raise Exception("Fields can not be empty")
+                db_disconnect()
+                db_connection()
+                admin = Admin.objects(email=data["email"]).first()
+                if admin:
+
+                    if User.check_password(admin, data["password"]):
+                        # Generate a JWT containing the user ID and a secret key
+                        payload = {'user_id': str(admin.id)}
+                        secret_key = 'mysecret'
+                        token = jwt.encode(payload,
+                                           secret_key,
+                                           algorithm='HS256')
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        response = {
+                            "message": "Admin authenticated successfully",
+                            "token": token
+                        }
+                        self.wfile.write(json.dumps(response).encode())
+                    else:
+                        raise Exception("Invalid email or password")
+                else:
+                    raise Exception("No user data is available")
+                
+
+
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                error_message = str(e)
+                self.wfile.write(json.dumps({"error": error_message}).encode())
