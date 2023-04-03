@@ -60,9 +60,7 @@ class DeleteClass(PostClass):
                                     self.send_header('Content-Type',
                                                      'application/json')
                                     self.end_headers()
-                                    response = {
-                                        "error": "No post found."
-                                    }
+                                    response = {"error": "No post found."}
                                     self.wfile.write(
                                         json.dumps(response).encode())
 
@@ -72,7 +70,8 @@ class DeleteClass(PostClass):
                                                      'application/json')
                                     self.end_headers()
                                     response = {
-                                        "error": "User is not authorized to delete this post."
+                                        "error":
+                                        "User is not authorized to delete this post."
                                     }
                                     self.wfile.write(
                                         json.dumps(response).encode())
