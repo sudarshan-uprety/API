@@ -138,6 +138,7 @@ class DeleteClass(PostClass):
                             self.send_header('Content-Type', 'application/json')
                             self.end_headers()
                             response={"success":"Account deleted successfully."}
+                            self.wfile.write(json.dumps(response).encode())
                         
                         elif user_id is not None:
                             admin_data=Admin.objects(id=user_id).first()
@@ -148,15 +149,22 @@ class DeleteClass(PostClass):
                                 self.send_header('Content-Type', 'application/json')
                                 self.end_headers()
                                 response={"success":"Account deleted successfully."}
+                                self.wfile.write(json.dumps(response).encode())
 
-                        if data['account_id']=="":
-                            raise Exception("Please provide the user id.")
-                        
+                            elif data['account_id']=="":
+                                raise Exception("Please provide the user id.")
+                            
+
+                            elif admin_data is None:
+                                raise Exception("Sorry user is not authorized to delete this account.")
+
+
+                            
 
             except Exception as e:
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 response={"error":str(e)}
-                self.wfile.write(json.dumps(response).encode)
+                self.wfile.write(json.dumps(response).encode())
 
