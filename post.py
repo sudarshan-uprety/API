@@ -236,8 +236,6 @@ class UserClass(BaseHTTPRequestHandler):
                 response = {"error": str(e)}
                 self.wfile.write(json.dumps(response).encode())
 
-
-
         elif self.path == '/adminLogin' and self.command == 'POST':
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length).decode()
@@ -269,8 +267,6 @@ class UserClass(BaseHTTPRequestHandler):
                         raise Exception("Invalid email or password")
                 else:
                     raise Exception("No user data is available")
-                
-
 
             except Exception as e:
                 self.send_response(400)
